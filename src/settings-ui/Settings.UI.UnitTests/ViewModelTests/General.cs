@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 
 using Microsoft.PowerToys.Settings.UI.Library;
 using Microsoft.PowerToys.Settings.UI.UnitTests.BackwardsCompatibility;
@@ -371,6 +372,20 @@ namespace ViewModelTests
         }
 
         [TestMethod]
+        public void FastLaunchSettingsShouldRoundTripAdditionalModuleKeys()
+        {
+            GeneralSettings settings = new GeneralSettings();
+            settings.FastLaunch.SetValue("FutureUtility", false);
+
+            string outgoingSettings = new OutGoingGeneralSettings(settings).ToString();
+            OutGoingGeneralSettings deserializedSettings = JsonSerializer.Deserialize<OutGoingGeneralSettings>(outgoingSettings);
+
+            Assert.IsNotNull(deserializedSettings.GeneralSettings);
+            Assert.IsNotNull(deserializedSettings.GeneralSettings.FastLaunch);
+            Assert.IsFalse(deserializedSettings.GeneralSettings.FastLaunch.GetValue("FutureUtility"));
+        }
+
+        [TestMethod]
         public void LowMemoryBulkCommandsShouldNotRunWhenIndividualOverrideChanges()
         {
             int ipcMessageCount = 0;
@@ -394,37 +409,42 @@ namespace ViewModelTests
 
             Assert.IsFalse(viewModel.LowMemoryMode);
 
-            viewModel.LowMemoryTextExtractor = true;
+            LowMemoryModuleViewModel textExtractor = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == PowerOcrSettings.ModuleName);
+            LowMemoryModuleViewModel colorPicker = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == ColorPickerSettings.ModuleName);
+            LowMemoryModuleViewModel advancedPaste = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == AdvancedPasteSettings.ModuleName);
+            LowMemoryModuleViewModel peek = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == PeekSettings.ModuleName);
+
+            textExtractor.IsEnabled = true;
             Assert.AreEqual(1, ipcMessageCount);
             Assert.IsTrue(viewModel.LowMemoryMode);
-            Assert.IsTrue(viewModel.LowMemoryTextExtractor);
-            Assert.IsFalse(viewModel.LowMemoryColorPicker);
-            Assert.IsFalse(viewModel.LowMemoryAdvancedPaste);
-            Assert.IsFalse(viewModel.LowMemoryPeek);
+            Assert.IsTrue(textExtractor.IsEnabled);
+            Assert.IsFalse(colorPicker.IsEnabled);
+            Assert.IsFalse(advancedPaste.IsEnabled);
+            Assert.IsFalse(peek.IsEnabled);
 
             viewModel.EnableAllLowMemoryModeCommand.Execute(null);
             Assert.AreEqual(2, ipcMessageCount);
             Assert.IsTrue(viewModel.LowMemoryMode);
-            Assert.IsTrue(viewModel.LowMemoryTextExtractor);
-            Assert.IsTrue(viewModel.LowMemoryColorPicker);
-            Assert.IsTrue(viewModel.LowMemoryAdvancedPaste);
-            Assert.IsTrue(viewModel.LowMemoryPeek);
+            Assert.IsTrue(textExtractor.IsEnabled);
+            Assert.IsTrue(colorPicker.IsEnabled);
+            Assert.IsTrue(advancedPaste.IsEnabled);
+            Assert.IsTrue(peek.IsEnabled);
 
-            viewModel.LowMemoryPeek = false;
+            peek.IsEnabled = false;
             Assert.AreEqual(3, ipcMessageCount);
             Assert.IsTrue(viewModel.LowMemoryMode);
-            Assert.IsTrue(viewModel.LowMemoryTextExtractor);
-            Assert.IsTrue(viewModel.LowMemoryColorPicker);
-            Assert.IsTrue(viewModel.LowMemoryAdvancedPaste);
-            Assert.IsFalse(viewModel.LowMemoryPeek);
+            Assert.IsTrue(textExtractor.IsEnabled);
+            Assert.IsTrue(colorPicker.IsEnabled);
+            Assert.IsTrue(advancedPaste.IsEnabled);
+            Assert.IsFalse(peek.IsEnabled);
 
             viewModel.DisableAllLowMemoryModeCommand.Execute(null);
             Assert.AreEqual(4, ipcMessageCount);
             Assert.IsFalse(viewModel.LowMemoryMode);
-            Assert.IsFalse(viewModel.LowMemoryTextExtractor);
-            Assert.IsFalse(viewModel.LowMemoryColorPicker);
-            Assert.IsFalse(viewModel.LowMemoryAdvancedPaste);
-            Assert.IsFalse(viewModel.LowMemoryPeek);
+            Assert.IsFalse(textExtractor.IsEnabled);
+            Assert.IsFalse(colorPicker.IsEnabled);
+            Assert.IsFalse(advancedPaste.IsEnabled);
+            Assert.IsFalse(peek.IsEnabled);
         }
 
         [TestMethod]

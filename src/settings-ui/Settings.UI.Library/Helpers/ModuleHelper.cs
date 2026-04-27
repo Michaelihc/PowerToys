@@ -2,6 +2,9 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Generic;
+using System.Linq;
+
 using ManagedCommon;
 
 namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
@@ -122,78 +125,40 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
             }
         }
 
+        public static IReadOnlyList<LowMemoryModuleDescriptor> LowMemoryModuleDescriptors { get; } = new[]
+        {
+            new LowMemoryModuleDescriptor(ModuleType.PowerOCR, PowerOcrSettings.ModuleName, "GeneralPage_FastLaunchTextExtractor"),
+            new LowMemoryModuleDescriptor(ModuleType.ColorPicker, ColorPickerSettings.ModuleName, "GeneralPage_FastLaunchColorPicker"),
+            new LowMemoryModuleDescriptor(ModuleType.AdvancedPaste, AdvancedPasteSettings.ModuleName, "GeneralPage_FastLaunchAdvancedPaste"),
+            new LowMemoryModuleDescriptor(ModuleType.Peek, PeekSettings.ModuleName, "GeneralPage_FastLaunchPeek"),
+        };
+
+        public static IReadOnlyList<ModuleType> FastLaunchOverrideModules { get; } = LowMemoryModuleDescriptors.Select(descriptor => descriptor.ModuleType).ToList();
+
         public static bool SupportsFastLaunchOverride(ModuleType moduleType)
         {
-            return moduleType is ModuleType.PowerOCR or ModuleType.ColorPicker or ModuleType.AdvancedPaste or ModuleType.Peek;
+            return LowMemoryModuleDescriptors.Any(descriptor => descriptor.ModuleType == moduleType);
         }
 
-        public static ModuleType[] FastLaunchOverrideModules { get; } = new[]
+        public static LowMemoryModuleDescriptor GetLowMemoryModuleDescriptor(ModuleType moduleType)
         {
-            ModuleType.PowerOCR,
-            ModuleType.ColorPicker,
-            ModuleType.AdvancedPaste,
-            ModuleType.Peek,
-        };
+            return LowMemoryModuleDescriptors.FirstOrDefault(descriptor => descriptor.ModuleType == moduleType);
+        }
 
         public static bool GetFastLaunch(GeneralSettings generalSettingsConfig, ModuleType moduleType)
         {
             generalSettingsConfig.FastLaunch ??= new FastLaunchSettings();
 
-            return moduleType switch
-            {
-                ModuleType.PowerOCR => generalSettingsConfig.FastLaunch.TextExtractor,
-                ModuleType.ColorPicker => generalSettingsConfig.FastLaunch.ColorPicker,
-                ModuleType.AdvancedPaste => generalSettingsConfig.FastLaunch.AdvancedPaste,
-                ModuleType.Peek => generalSettingsConfig.FastLaunch.Peek,
-                _ => false,
-            };
+            var descriptor = GetLowMemoryModuleDescriptor(moduleType);
+            return descriptor != null && generalSettingsConfig.FastLaunch.GetValue(descriptor.ModuleKey);
         }
 
         public static bool SetFastLaunch(GeneralSettings generalSettingsConfig, ModuleType moduleType, bool fastLaunch)
         {
             generalSettingsConfig.FastLaunch ??= new FastLaunchSettings();
 
-            switch (moduleType)
-            {
-                case ModuleType.PowerOCR:
-                    if (generalSettingsConfig.FastLaunch.TextExtractor == fastLaunch)
-                    {
-                        return false;
-                    }
-
-                    generalSettingsConfig.FastLaunch.TextExtractor = fastLaunch;
-                    return true;
-
-                case ModuleType.ColorPicker:
-                    if (generalSettingsConfig.FastLaunch.ColorPicker == fastLaunch)
-                    {
-                        return false;
-                    }
-
-                    generalSettingsConfig.FastLaunch.ColorPicker = fastLaunch;
-                    return true;
-
-                case ModuleType.AdvancedPaste:
-                    if (generalSettingsConfig.FastLaunch.AdvancedPaste == fastLaunch)
-                    {
-                        return false;
-                    }
-
-                    generalSettingsConfig.FastLaunch.AdvancedPaste = fastLaunch;
-                    return true;
-
-                case ModuleType.Peek:
-                    if (generalSettingsConfig.FastLaunch.Peek == fastLaunch)
-                    {
-                        return false;
-                    }
-
-                    generalSettingsConfig.FastLaunch.Peek = fastLaunch;
-                    return true;
-
-                default:
-                    return false;
-            }
+            var descriptor = GetLowMemoryModuleDescriptor(moduleType);
+            return descriptor != null && generalSettingsConfig.FastLaunch.SetValue(descriptor.ModuleKey, fastLaunch);
         }
 
         public static bool GetLowMemoryMode(GeneralSettings generalSettingsConfig, ModuleType moduleType)
@@ -208,9 +173,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
 
         public static bool AnyLowMemoryModeEnabled(GeneralSettings generalSettingsConfig)
         {
-            foreach (ModuleType moduleType in FastLaunchOverrideModules)
+            foreach (var descriptor in LowMemoryModuleDescriptors)
             {
-                if (GetLowMemoryMode(generalSettingsConfig, moduleType))
+                if (GetLowMemoryMode(generalSettingsConfig, descriptor.ModuleType))
                 {
                     return true;
                 }
@@ -222,9 +187,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
         public static bool SetLowMemoryModeForAll(GeneralSettings generalSettingsConfig, bool lowMemoryMode)
         {
             bool changed = false;
-            foreach (ModuleType moduleType in FastLaunchOverrideModules)
+            foreach (var descriptor in LowMemoryModuleDescriptors)
             {
-                changed |= SetLowMemoryMode(generalSettingsConfig, moduleType, lowMemoryMode);
+                changed |= SetLowMemoryMode(generalSettingsConfig, descriptor.ModuleType, lowMemoryMode);
             }
 
             bool oldLowMemoryMode = generalSettingsConfig.LowMemoryMode;
