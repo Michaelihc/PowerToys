@@ -5891,7 +5891,7 @@ Text uses the current drawing color.</value>
     <value>Low memory mode</value>
   </data>
   <data name="GeneralPage_LowMemoryMode.Description" xml:space="preserve">
-    <value>Shows which supported utilities close when not in use.</value>
+    <value>Supported utilities close when not in use to use less memory, but may open slower.</value>
   </data>
   <data name="GeneralPage_LowMemoryModeAllSupported.Header" xml:space="preserve">
     <value>All supported utilities</value>
@@ -5904,6 +5904,18 @@ Text uses the current drawing color.</value>
   </data>
   <data name="GeneralPage_LowMemoryModeDisableAll.Content" xml:space="preserve">
     <value>Disable all</value>
+  </data>
+  <data name="GeneralPage_LowMemoryTextExtractor.Header" xml:space="preserve">
+    <value>Text Extractor</value>
+  </data>
+  <data name="GeneralPage_LowMemoryColorPicker.Header" xml:space="preserve">
+    <value>Color Picker</value>
+  </data>
+  <data name="GeneralPage_LowMemoryAdvancedPaste.Header" xml:space="preserve">
+    <value>Advanced Paste</value>
+  </data>
+  <data name="GeneralPage_LowMemoryPeek.Header" xml:space="preserve">
+    <value>Peek</value>
   </data>
   <data name="GeneralPage_FastLaunchTextExtractor.Header" xml:space="preserve">
     <value>Low memory mode for Text Extractor</value>

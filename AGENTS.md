@@ -52,7 +52,7 @@ These instruction files are automatically applied when working in their respecti
 |------|---------|
 | First build / NuGet restore | `tools\build\build-essentials.cmd` |
 | Build current folder | `tools\build\build.cmd` |
-| Build with options | `build.ps1 -Platform x64 -Configuration Release` |
+| Build with options | `tools\build\build.ps1 -Platform x64 -Configuration Release` |
 
 ### Build discipline
 

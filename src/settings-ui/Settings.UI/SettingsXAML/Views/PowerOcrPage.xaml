@@ -38,7 +38,7 @@
                 <tkcontrols:SettingsCard
                     Name="TextExtractorFastLaunchInLowMemoryMode"
                     x:Uid="TextExtractor_FastLaunchInLowMemoryMode"
-                    HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE964;}">
                     <ToggleSwitch
                         x:Uid="ToggleSwitch"
                         AutomationProperties.Name="{Binding ElementName=TextExtractorFastLaunchInLowMemoryMode, Path=Header}"

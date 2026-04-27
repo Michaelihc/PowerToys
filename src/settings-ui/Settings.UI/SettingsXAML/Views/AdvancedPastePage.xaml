@@ -70,7 +70,7 @@
                     <tkcontrols:SettingsCard
                         Name="AdvancedPasteFastLaunchInLowMemoryMode"
                         x:Uid="AdvancedPaste_FastLaunchInLowMemoryMode"
-                        HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE964;}">
                         <ToggleSwitch
                             x:Uid="ToggleSwitch"
                             AutomationProperties.Name="{Binding ElementName=AdvancedPasteFastLaunchInLowMemoryMode, Path=Header}"

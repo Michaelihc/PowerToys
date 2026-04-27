@@ -26,7 +26,7 @@
                 <tkcontrols:SettingsCard
                     Name="PeekFastLaunchInLowMemoryMode"
                     x:Uid="Peek_FastLaunchInLowMemoryMode"
-                    HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE964;}">
                     <ToggleSwitch
                         x:Uid="ToggleSwitch"
                         AutomationProperties.Name="{Binding ElementName=PeekFastLaunchInLowMemoryMode, Path=Header}"
