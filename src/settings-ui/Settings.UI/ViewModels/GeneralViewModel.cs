@@ -51,6 +51,57 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
 
         private GeneralSettings GeneralSettingsConfig { get; set; }
 
+        private bool GetLowMemoryMode(ModuleType moduleType)
+        {
+            return ModuleHelper.GetLowMemoryMode(GeneralSettingsConfig, moduleType);
+        }
+
+        private bool SetLowMemoryMode(ModuleType moduleType, bool value)
+        {
+            bool changed = ModuleHelper.SetLowMemoryMode(GeneralSettingsConfig, moduleType, value);
+            GeneralSettingsConfig.LowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(GeneralSettingsConfig);
+            return changed;
+        }
+
+        private void RefreshLowMemoryModeSummary()
+        {
+            _lowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(GeneralSettingsConfig);
+            GeneralSettingsConfig.LowMemoryMode = _lowMemoryMode;
+        }
+
+        private void NotifyLowMemoryModeSummaryChanged()
+        {
+            OnPropertyChanged(nameof(LowMemoryMode));
+        }
+
+        private void UpdateLowMemoryModeProperty(ModuleType moduleType, ref bool backingField, string propertyName)
+        {
+            bool newValue = GetLowMemoryMode(moduleType);
+            if (backingField != newValue)
+            {
+                backingField = newValue;
+                OnPropertyChanged(propertyName);
+            }
+        }
+
+        private void RefreshLowMemoryModeProperties()
+        {
+            RefreshLowMemoryModeSummary();
+            _lowMemoryTextExtractor = GetLowMemoryMode(ModuleType.PowerOCR);
+            _lowMemoryColorPicker = GetLowMemoryMode(ModuleType.ColorPicker);
+            _lowMemoryAdvancedPaste = GetLowMemoryMode(ModuleType.AdvancedPaste);
+            _lowMemoryPeek = GetLowMemoryMode(ModuleType.Peek);
+        }
+
+        private void NotifyLowMemoryModePropertiesChanged()
+        {
+            NotifyLowMemoryModeSummaryChanged();
+            OnPropertyChanged(nameof(LowMemoryTextExtractor));
+            OnPropertyChanged(nameof(LowMemoryColorPicker));
+            OnPropertyChanged(nameof(LowMemoryAdvancedPaste));
+            OnPropertyChanged(nameof(LowMemoryPeek));
+        }
+
         private UpdatingSettings UpdatingSettingsConfig { get; set; }
 
         public ButtonClickCommand CheckForUpdatesEventHandler { get; set; }
@@ -72,6 +123,10 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         public ButtonClickCommand RestartElevatedButtonEventHandler { get; set; }
 
         public ButtonClickCommand UpdateNowButtonEventHandler { get; set; }
+
+        public ButtonClickCommand EnableAllLowMemoryModeCommand { get; set; }
+
+        public ButtonClickCommand DisableAllLowMemoryModeCommand { get; set; }
 
         public Func<string, int> SendConfigMSG { get; }
 
@@ -105,6 +160,8 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             SelectSettingBackupDirEventHandler = new ButtonClickCommand(SelectSettingBackupDir);
             RestoreConfigsEventHandler = new ButtonClickCommand(RestoreConfigsClick);
             RefreshBackupStatusEventHandler = new ButtonClickCommand(RefreshBackupStatusEventHandlerClick);
+            EnableAllLowMemoryModeCommand = new ButtonClickCommand(() => SetLowMemoryModeForAll(true));
+            DisableAllLowMemoryModeCommand = new ButtonClickCommand(() => SetLowMemoryModeForAll(false));
             HideBackupAndRestoreMessageAreaAction = hideBackupAndRestoreMessageAreaAction;
             DoBackupAndRestoreDryRun = doBackupAndRestoreDryRun;
             PickSingleFolderDialog = pickSingleFolderDialog;
@@ -174,6 +231,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             _runElevated = GeneralSettingsConfig.RunElevated;
             _enableWarningsElevatedApps = GeneralSettingsConfig.EnableWarningsElevatedApps;
             _enableQuickAccess = GeneralSettingsConfig.EnableQuickAccess;
+            RefreshLowMemoryModeProperties();
             _quickAccessShortcut = GeneralSettingsConfig.QuickAccessShortcut;
             if (_quickAccessShortcut != null)
             {
@@ -262,6 +320,11 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         private bool _isAdmin;
         private bool _enableWarningsElevatedApps;
         private bool _enableQuickAccess;
+        private bool _lowMemoryMode;
+        private bool _lowMemoryTextExtractor;
+        private bool _lowMemoryColorPicker;
+        private bool _lowMemoryAdvancedPaste;
+        private bool _lowMemoryPeek;
         private HotkeySettings _quickAccessShortcut;
         private int _themeIndex;
 
@@ -538,6 +601,105 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 {
                     _enableQuickAccess = value;
                     GeneralSettingsConfig.EnableQuickAccess = value;
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryMode
+        {
+            get
+            {
+                return _lowMemoryMode;
+            }
+
+            set
+            {
+                SetLowMemoryModeForAll(value);
+            }
+        }
+
+        public void SetLowMemoryModeForAll(bool value)
+        {
+            if (ModuleHelper.SetLowMemoryModeForAll(GeneralSettingsConfig, value))
+            {
+                RefreshLowMemoryModeProperties();
+                NotifyLowMemoryModePropertiesChanged();
+                NotifyPropertyChanged(nameof(LowMemoryMode));
+            }
+        }
+
+        public bool LowMemoryTextExtractor
+        {
+            get
+            {
+                return _lowMemoryTextExtractor;
+            }
+
+            set
+            {
+                if (SetLowMemoryMode(ModuleType.PowerOCR, value))
+                {
+                    _lowMemoryTextExtractor = value;
+                    RefreshLowMemoryModeSummary();
+                    NotifyLowMemoryModeSummaryChanged();
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryColorPicker
+        {
+            get
+            {
+                return _lowMemoryColorPicker;
+            }
+
+            set
+            {
+                if (SetLowMemoryMode(ModuleType.ColorPicker, value))
+                {
+                    _lowMemoryColorPicker = value;
+                    RefreshLowMemoryModeSummary();
+                    NotifyLowMemoryModeSummaryChanged();
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryAdvancedPaste
+        {
+            get
+            {
+                return _lowMemoryAdvancedPaste;
+            }
+
+            set
+            {
+                if (SetLowMemoryMode(ModuleType.AdvancedPaste, value))
+                {
+                    _lowMemoryAdvancedPaste = value;
+                    RefreshLowMemoryModeSummary();
+                    NotifyLowMemoryModeSummaryChanged();
+                    NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryPeek
+        {
+            get
+            {
+                return _lowMemoryPeek;
+            }
+
+            set
+            {
+                if (SetLowMemoryMode(ModuleType.Peek, value))
+                {
+                    _lowMemoryPeek = value;
+                    RefreshLowMemoryModeSummary();
+                    NotifyLowMemoryModeSummaryChanged();
                     NotifyPropertyChanged();
                 }
             }
@@ -1535,6 +1697,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         {
             _dispatcherQueue?.TryEnqueue(() =>
             {
+                newSettings.FastLaunch ??= new FastLaunchSettings();
                 GeneralSettingsConfig = newSettings;
 
                 if (_enableQuickAccess != newSettings.EnableQuickAccess)
@@ -1542,6 +1705,20 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                     _enableQuickAccess = newSettings.EnableQuickAccess;
                     OnPropertyChanged(nameof(EnableQuickAccess));
                 }
+
+                bool newLowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(newSettings);
+                if (_lowMemoryMode != newLowMemoryMode)
+                {
+                    _lowMemoryMode = newLowMemoryMode;
+                    OnPropertyChanged(nameof(LowMemoryMode));
+                }
+
+                newSettings.LowMemoryMode = newLowMemoryMode;
+
+                UpdateLowMemoryModeProperty(ModuleType.PowerOCR, ref _lowMemoryTextExtractor, nameof(LowMemoryTextExtractor));
+                UpdateLowMemoryModeProperty(ModuleType.ColorPicker, ref _lowMemoryColorPicker, nameof(LowMemoryColorPicker));
+                UpdateLowMemoryModeProperty(ModuleType.AdvancedPaste, ref _lowMemoryAdvancedPaste, nameof(LowMemoryAdvancedPaste));
+                UpdateLowMemoryModeProperty(ModuleType.Peek, ref _lowMemoryPeek, nameof(LowMemoryPeek));
             });
         }
 

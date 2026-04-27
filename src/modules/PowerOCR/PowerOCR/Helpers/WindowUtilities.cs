@@ -22,7 +22,7 @@ public static class WindowUtilities
             return;
         }
 
-        Logger.LogInfo($"Adding Overlays for each screen");
+        Logger.LogInfo($"Adding TextExtractor overlays for {Screen.AllScreens.Length} screen(s).");
         foreach (Screen screen in Screen.AllScreens)
         {
             DpiScale dpiScale = screen.GetDpi();
@@ -34,6 +34,7 @@ public static class WindowUtilities
         }
 
         PowerToysTelemetry.Log.WriteEvent(new PowerOCR.Telemetry.PowerOCRInvokedEvent());
+        Logger.LogInfo("TextExtractor overlay launch completed.");
     }
 
     internal static bool IsOCROverlayCreated()
@@ -65,8 +66,11 @@ public static class WindowUtilities
 
         GC.Collect();
 
-        // TODO: Decide when to close the process
-        // System.Windows.Application.Current.Shutdown();
+        if (App.ExitAfterClose)
+        {
+            Logger.LogInfo("TextExtractor was launched in exit-after-close mode. Exiting after closing overlays.");
+            (System.Windows.Application.Current as App)?.RequestShutdown("exit after close");
+        }
     }
 
     public static void ActivateWindow(Window window)

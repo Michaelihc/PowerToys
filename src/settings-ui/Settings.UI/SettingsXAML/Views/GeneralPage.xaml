@@ -323,6 +323,60 @@
                             <tkcontrols:SettingsCard Visibility="Collapsed" />
                         </tkcontrols:SettingsExpander.Items>
                     </tkcontrols:SettingsExpander>
+
+                    <tkcontrols:SettingsExpander
+                        Name="GeneralPageLowMemoryMode"
+                        x:Uid="GeneralPage_LowMemoryMode"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                        <tkcontrols:SettingsExpander.Items>
+                            <tkcontrols:SettingsCard
+                                Name="GeneralPageLowMemoryModeAllSupported"
+                                x:Uid="GeneralPage_LowMemoryModeAllSupported">
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="12">
+                                    <Button
+                                        x:Uid="GeneralPage_LowMemoryModeEnableAll"
+                                        Command="{Binding EnableAllLowMemoryModeCommand}" />
+                                    <Button
+                                        x:Uid="GeneralPage_LowMemoryModeDisableAll"
+                                        Command="{Binding DisableAllLowMemoryModeCommand}" />
+                                </StackPanel>
+                            </tkcontrols:SettingsCard>
+                            <tkcontrols:SettingsCard
+                                Name="GeneralPageFastLaunchTextExtractor"
+                                x:Uid="GeneralPage_FastLaunchTextExtractor">
+                                <ToggleSwitch
+                                    x:Uid="ToggleSwitch"
+                                    AutomationProperties.Name="{Binding ElementName=GeneralPageFastLaunchTextExtractor, Path=Header}"
+                                    IsOn="{x:Bind ViewModel.LowMemoryTextExtractor, Mode=TwoWay}" />
+                            </tkcontrols:SettingsCard>
+                            <tkcontrols:SettingsCard
+                                Name="GeneralPageFastLaunchColorPicker"
+                                x:Uid="GeneralPage_FastLaunchColorPicker">
+                                <ToggleSwitch
+                                    x:Uid="ToggleSwitch"
+                                    AutomationProperties.Name="{Binding ElementName=GeneralPageFastLaunchColorPicker, Path=Header}"
+                                    IsOn="{x:Bind ViewModel.LowMemoryColorPicker, Mode=TwoWay}" />
+                            </tkcontrols:SettingsCard>
+                            <tkcontrols:SettingsCard
+                                Name="GeneralPageFastLaunchAdvancedPaste"
+                                x:Uid="GeneralPage_FastLaunchAdvancedPaste">
+                                <ToggleSwitch
+                                    x:Uid="ToggleSwitch"
+                                    AutomationProperties.Name="{Binding ElementName=GeneralPageFastLaunchAdvancedPaste, Path=Header}"
+                                    IsOn="{x:Bind ViewModel.LowMemoryAdvancedPaste, Mode=TwoWay}" />
+                            </tkcontrols:SettingsCard>
+                            <tkcontrols:SettingsCard
+                                Name="GeneralPageFastLaunchPeek"
+                                x:Uid="GeneralPage_FastLaunchPeek">
+                                <ToggleSwitch
+                                    x:Uid="ToggleSwitch"
+                                    AutomationProperties.Name="{Binding ElementName=GeneralPageFastLaunchPeek, Path=Header}"
+                                    IsOn="{x:Bind ViewModel.LowMemoryPeek, Mode=TwoWay}" />
+                            </tkcontrols:SettingsCard>
+                        </tkcontrols:SettingsExpander.Items>
+                    </tkcontrols:SettingsExpander>
                 </controls:SettingsGroup>
 
                 <controls:SettingsGroup x:Uid="General_SettingsBackupAndRestoreTitle" Visibility="Visible">

@@ -67,6 +67,15 @@
                             <ToggleSwitch x:Uid="ToggleSwitch" IsOn="{x:Bind ViewModel.IsEnabled, Mode=TwoWay}" />
                         </tkcontrols:SettingsCard>
                     </controls:GPOInfoControl>
+                    <tkcontrols:SettingsCard
+                        Name="AdvancedPasteFastLaunchInLowMemoryMode"
+                        x:Uid="AdvancedPaste_FastLaunchInLowMemoryMode"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                        <ToggleSwitch
+                            x:Uid="ToggleSwitch"
+                            AutomationProperties.Name="{Binding ElementName=AdvancedPasteFastLaunchInLowMemoryMode, Path=Header}"
+                            IsOn="{x:Bind ViewModel.UseLowMemoryMode, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
                     <controls:SettingsGroup x:Uid="AdvancedPaste_EnableAISettingsGroup" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
                         <InfoBar
                             x:Uid="GPO_AdvancedPasteAi_SettingIsManaged"

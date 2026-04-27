@@ -38,6 +38,8 @@ namespace AdvancedPaste
     /// </summary>
     public partial class App : Application, IDisposable
     {
+        private const string ExitAfterUseArgument = "--exit-after-use";
+
         public IHost Host { get; private set; }
 
         public ETWTrace EtwTrace { get; private set; } = new ETWTrace();
@@ -57,6 +59,7 @@ namespace AdvancedPaste
         private nint windowHwnd;
 
         private bool disposedValue;
+        private bool exitAfterUse;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="App"/> class.
@@ -97,6 +100,20 @@ namespace AdvancedPaste
             return window;
         }
 
+        internal bool ExitAfterUse => exitAfterUse;
+
+        internal void ExitAfterUseIfNeeded(string reason)
+        {
+            if (!ExitAfterUse)
+            {
+                return;
+            }
+
+            Logger.LogInfo($"Advanced Paste exiting after use. reason={reason}");
+            Dispose();
+            Environment.Exit(0);
+        }
+
         public static T GetService<T>()
             where T : class
         {
@@ -115,6 +132,9 @@ namespace AdvancedPaste
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
             var cmdArgs = Environment.GetCommandLineArgs();
+            exitAfterUse = cmdArgs?.Contains(ExitAfterUseArgument, StringComparer.OrdinalIgnoreCase) == true;
+            Logger.LogInfo($"Advanced Paste launched. exitAfterUse={ExitAfterUse}");
+
             if (cmdArgs?.Length > 1)
             {
                 if (int.TryParse(cmdArgs[1], out int powerToysRunnerPid))
@@ -155,10 +175,12 @@ namespace AdvancedPaste
             else if (messageType == PowerToys.Interop.Constants.AdvancedPasteMarkdownMessage())
             {
                 await viewModel.ExecutePasteFormatAsync(PasteFormats.Markdown, PasteActionSource.GlobalKeyboardShortcut);
+                ExitAfterUseIfNeeded("markdown hotkey");
             }
             else if (messageType == PowerToys.Interop.Constants.AdvancedPasteJsonMessage())
             {
                 await viewModel.ExecutePasteFormatAsync(PasteFormats.Json, PasteActionSource.GlobalKeyboardShortcut);
+                ExitAfterUseIfNeeded("json hotkey");
             }
             else if (messageType == PowerToys.Interop.Constants.AdvancedPasteAdditionalActionMessage())
             {
@@ -196,6 +218,7 @@ namespace AdvancedPaste
                 {
                     await ShowWindow();
                     await viewModel.ExecutePasteFormatAsync(pasteFormat, PasteActionSource.GlobalKeyboardShortcut);
+                    ExitAfterUseIfNeeded("additional action hotkey");
                 }
             }
         }
@@ -216,6 +239,7 @@ namespace AdvancedPaste
                 {
                     await ShowWindow();
                     await viewModel.ExecuteCustomActionAsync(customActionId, PasteActionSource.GlobalKeyboardShortcut);
+                    ExitAfterUseIfNeeded("custom action hotkey");
                 }
             }
         }

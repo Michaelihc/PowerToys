@@ -122,6 +122,116 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
             }
         }
 
+        public static bool SupportsFastLaunchOverride(ModuleType moduleType)
+        {
+            return moduleType is ModuleType.PowerOCR or ModuleType.ColorPicker or ModuleType.AdvancedPaste or ModuleType.Peek;
+        }
+
+        public static ModuleType[] FastLaunchOverrideModules { get; } = new[]
+        {
+            ModuleType.PowerOCR,
+            ModuleType.ColorPicker,
+            ModuleType.AdvancedPaste,
+            ModuleType.Peek,
+        };
+
+        public static bool GetFastLaunch(GeneralSettings generalSettingsConfig, ModuleType moduleType)
+        {
+            generalSettingsConfig.FastLaunch ??= new FastLaunchSettings();
+
+            return moduleType switch
+            {
+                ModuleType.PowerOCR => generalSettingsConfig.FastLaunch.TextExtractor,
+                ModuleType.ColorPicker => generalSettingsConfig.FastLaunch.ColorPicker,
+                ModuleType.AdvancedPaste => generalSettingsConfig.FastLaunch.AdvancedPaste,
+                ModuleType.Peek => generalSettingsConfig.FastLaunch.Peek,
+                _ => false,
+            };
+        }
+
+        public static bool SetFastLaunch(GeneralSettings generalSettingsConfig, ModuleType moduleType, bool fastLaunch)
+        {
+            generalSettingsConfig.FastLaunch ??= new FastLaunchSettings();
+
+            switch (moduleType)
+            {
+                case ModuleType.PowerOCR:
+                    if (generalSettingsConfig.FastLaunch.TextExtractor == fastLaunch)
+                    {
+                        return false;
+                    }
+
+                    generalSettingsConfig.FastLaunch.TextExtractor = fastLaunch;
+                    return true;
+
+                case ModuleType.ColorPicker:
+                    if (generalSettingsConfig.FastLaunch.ColorPicker == fastLaunch)
+                    {
+                        return false;
+                    }
+
+                    generalSettingsConfig.FastLaunch.ColorPicker = fastLaunch;
+                    return true;
+
+                case ModuleType.AdvancedPaste:
+                    if (generalSettingsConfig.FastLaunch.AdvancedPaste == fastLaunch)
+                    {
+                        return false;
+                    }
+
+                    generalSettingsConfig.FastLaunch.AdvancedPaste = fastLaunch;
+                    return true;
+
+                case ModuleType.Peek:
+                    if (generalSettingsConfig.FastLaunch.Peek == fastLaunch)
+                    {
+                        return false;
+                    }
+
+                    generalSettingsConfig.FastLaunch.Peek = fastLaunch;
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        public static bool GetLowMemoryMode(GeneralSettings generalSettingsConfig, ModuleType moduleType)
+        {
+            return SupportsFastLaunchOverride(moduleType) && !GetFastLaunch(generalSettingsConfig, moduleType);
+        }
+
+        public static bool SetLowMemoryMode(GeneralSettings generalSettingsConfig, ModuleType moduleType, bool lowMemoryMode)
+        {
+            return SetFastLaunch(generalSettingsConfig, moduleType, !lowMemoryMode);
+        }
+
+        public static bool AnyLowMemoryModeEnabled(GeneralSettings generalSettingsConfig)
+        {
+            foreach (ModuleType moduleType in FastLaunchOverrideModules)
+            {
+                if (GetLowMemoryMode(generalSettingsConfig, moduleType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool SetLowMemoryModeForAll(GeneralSettings generalSettingsConfig, bool lowMemoryMode)
+        {
+            bool changed = false;
+            foreach (ModuleType moduleType in FastLaunchOverrideModules)
+            {
+                changed |= SetLowMemoryMode(generalSettingsConfig, moduleType, lowMemoryMode);
+            }
+
+            bool oldLowMemoryMode = generalSettingsConfig.LowMemoryMode;
+            generalSettingsConfig.LowMemoryMode = AnyLowMemoryModeEnabled(generalSettingsConfig);
+            return changed || oldLowMemoryMode != generalSettingsConfig.LowMemoryMode;
+        }
+
         /// <summary>
         /// Gets the module key name used in IPC messages and settings JSON.
         /// These names match the JsonPropertyName attributes in EnabledModules class.

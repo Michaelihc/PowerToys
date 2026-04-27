@@ -8,6 +8,7 @@ namespace PTSettingsHelper
     constexpr inline const wchar_t* last_version_run_filename = L"last_version_run.json";
     constexpr inline const wchar_t* opened_at_first_launch_json_field_name = L"openedAtFirstLaunch";
     constexpr inline const wchar_t* last_version_json_field_name = L"last_version";
+    constexpr inline const wchar_t* fast_launch_json_field_name = L"fast_launch";
     constexpr inline const wchar_t* DataDiagnosticsRegKey = L"Software\\Classes\\PowerToys";
     constexpr inline const wchar_t* DataDiagnosticsRegValueName = L"AllowDataDiagnostics";
 
@@ -97,6 +98,52 @@ namespace PTSettingsHelper
         std::filesystem::path result(PTSettingsHelper::get_root_save_folder_location());
         result = result.append(log_settings_filename);
         return result.wstring();
+    }
+
+    bool low_memory_mode_enabled()
+    {
+        try
+        {
+            auto general_settings = load_general_settings();
+            if (!json::has(general_settings, fast_launch_json_field_name, json::JsonValueType::Object))
+            {
+                return false;
+            }
+
+            auto fast_launch = general_settings.GetNamedObject(fast_launch_json_field_name);
+            for (const auto& module_key : { L"TextExtractor", L"ColorPicker", L"AdvancedPaste", L"Peek" })
+            {
+                if (!fast_launch.GetNamedBoolean(module_key, true))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
+
+    bool should_fast_launch(std::wstring_view powertoy_key, bool default_value)
+    {
+        try
+        {
+            auto general_settings = load_general_settings();
+            if (!json::has(general_settings, fast_launch_json_field_name, json::JsonValueType::Object))
+            {
+                return default_value;
+            }
+
+            auto fast_launch = general_settings.GetNamedObject(fast_launch_json_field_name);
+            return fast_launch.GetNamedBoolean(std::wstring{ powertoy_key }, default_value);
+        }
+        catch (...)
+        {
+            return default_value;
+        }
     }
 
     bool get_oobe_opened_state()

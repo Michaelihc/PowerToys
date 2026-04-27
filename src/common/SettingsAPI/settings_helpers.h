@@ -20,6 +20,9 @@ namespace PTSettingsHelper
     json::JsonObject load_general_settings();
     std::wstring get_log_settings_file_location();
 
+    bool low_memory_mode_enabled();
+    bool should_fast_launch(std::wstring_view powertoy_key, bool default_value = true);
+
     bool get_oobe_opened_state();
     void save_oobe_opened_state();
     std::wstring get_last_version_run();
