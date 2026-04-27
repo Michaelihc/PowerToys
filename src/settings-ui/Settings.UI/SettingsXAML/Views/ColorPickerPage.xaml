@@ -29,7 +29,7 @@
                 <tkcontrols:SettingsCard
                     Name="ColorPickerFastLaunchInLowMemoryMode"
                     x:Uid="ColorPicker_FastLaunchInLowMemoryMode"
-                    HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE964;}">
                     <ToggleSwitch
                         x:Uid="ToggleSwitch"
                         AutomationProperties.Name="{Binding ElementName=ColorPickerFastLaunchInLowMemoryMode, Path=Header}"
