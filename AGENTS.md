@@ -72,6 +72,15 @@ Located next to the solution/project being built:
 - `build.<configuration>.<platform>.all.log` – full log
 - `build.<configuration>.<platform>.trace.binlog` – for MSBuild Structured Log Viewer
 
+### Build output discipline
+
+PowerToys builds can emit enough console output to make terminals and agent UIs extremely slow. Prefer quiet build output and rely on log files for details:
+
+1. Do not stream full MSBuild/build output to the terminal unless the user explicitly asks for it.
+2. Use the repo build scripts' file loggers and summarize only the exit code plus key errors/warnings.
+3. When a command is too noisy, redirect stdout/stderr to a log file and inspect `build.<configuration>.<platform>.errors.log` first.
+4. For installer/full-solution builds, report the generated artifact paths and log paths instead of dumping the full build transcript.
+
 For complete details, see [Build Guidelines](tools/build/BUILD-GUIDELINES.md).
 
 ## Tests

@@ -90,6 +90,7 @@ namespace AdvancedPaste
             if (_userSettings.CloseAfterLosingFocus && args.WindowActivationState == WindowActivationState.Deactivated)
             {
                 Hide();
+                (Application.Current as App)?.ExitAfterUseIfNeeded("window deactivated");
             }
         }
 
@@ -116,6 +117,7 @@ namespace AdvancedPaste
             await _optionsViewModel.CancelPasteActionAsync();
             Hide();
             args.Handled = true;
+            (Application.Current as App)?.ExitAfterUseIfNeeded("window closed");
         }
 
         private void Hide()

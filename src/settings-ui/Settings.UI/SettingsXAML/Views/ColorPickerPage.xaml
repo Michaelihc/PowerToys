@@ -26,6 +26,15 @@
                         <ToggleSwitch x:Uid="ToggleSwitch" IsOn="{x:Bind ViewModel.IsEnabled, Mode=TwoWay}" />
                     </tkcontrols:SettingsCard>
                 </controls:GPOInfoControl>
+                <tkcontrols:SettingsCard
+                    Name="ColorPickerFastLaunchInLowMemoryMode"
+                    x:Uid="ColorPicker_FastLaunchInLowMemoryMode"
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE950;}">
+                    <ToggleSwitch
+                        x:Uid="ToggleSwitch"
+                        AutomationProperties.Name="{Binding ElementName=ColorPickerFastLaunchInLowMemoryMode, Path=Header}"
+                        IsOn="{x:Bind ViewModel.UseLowMemoryMode, Mode=TwoWay}" />
+                </tkcontrols:SettingsCard>
 
                 <controls:SettingsGroup x:Uid="Shortcut" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
                     <tkcontrols:SettingsCard

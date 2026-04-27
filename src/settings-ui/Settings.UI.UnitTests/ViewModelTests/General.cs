@@ -340,6 +340,94 @@ namespace ViewModelTests
         }
 
         [TestMethod]
+        public void LowMemoryModeShouldBeDisabledByDefault()
+        {
+            GeneralSettings settings = new GeneralSettings();
+
+            Assert.IsFalse(settings.LowMemoryMode);
+            Assert.IsNotNull(settings.FastLaunch);
+            Assert.IsTrue(settings.FastLaunch.TextExtractor);
+            Assert.IsTrue(settings.FastLaunch.ColorPicker);
+            Assert.IsTrue(settings.FastLaunch.AdvancedPaste);
+            Assert.IsTrue(settings.FastLaunch.Peek);
+        }
+
+        [TestMethod]
+        public void LowMemorySettingsShouldRoundTripInOutgoingGeneralSettings()
+        {
+            GeneralSettings settings = new GeneralSettings
+            {
+                LowMemoryMode = true,
+            };
+            settings.FastLaunch.TextExtractor = false;
+
+            string outgoingSettings = new OutGoingGeneralSettings(settings).ToString();
+            OutGoingGeneralSettings deserializedSettings = JsonSerializer.Deserialize<OutGoingGeneralSettings>(outgoingSettings);
+
+            Assert.IsNotNull(deserializedSettings.GeneralSettings);
+            Assert.IsTrue(deserializedSettings.GeneralSettings.LowMemoryMode);
+            Assert.IsNotNull(deserializedSettings.GeneralSettings.FastLaunch);
+            Assert.IsFalse(deserializedSettings.GeneralSettings.FastLaunch.TextExtractor);
+        }
+
+        [TestMethod]
+        public void LowMemoryBulkCommandsShouldNotRunWhenIndividualOverrideChanges()
+        {
+            int ipcMessageCount = 0;
+            Func<string, int> sendMockIPCConfigMSG = msg =>
+            {
+                ipcMessageCount++;
+                return 0;
+            };
+            Func<string, int> sendRestartAdminIPCMessage = msg => 0;
+            Func<string, int> sendCheckForUpdatesIPCMessage = msg => 0;
+            GeneralViewModel viewModel = new TestGeneralViewModel(
+                settingsRepository: SettingsRepository<GeneralSettings>.GetInstance(mockGeneralSettingsUtils.Object),
+                "GeneralSettings_RunningAsAdminText",
+                "GeneralSettings_RunningAsUserText",
+                false,
+                false,
+                sendMockIPCConfigMSG,
+                sendRestartAdminIPCMessage,
+                sendCheckForUpdatesIPCMessage,
+                GeneralSettingsFileName);
+
+            Assert.IsFalse(viewModel.LowMemoryMode);
+
+            viewModel.LowMemoryTextExtractor = true;
+            Assert.AreEqual(1, ipcMessageCount);
+            Assert.IsTrue(viewModel.LowMemoryMode);
+            Assert.IsTrue(viewModel.LowMemoryTextExtractor);
+            Assert.IsFalse(viewModel.LowMemoryColorPicker);
+            Assert.IsFalse(viewModel.LowMemoryAdvancedPaste);
+            Assert.IsFalse(viewModel.LowMemoryPeek);
+
+            viewModel.EnableAllLowMemoryModeCommand.Execute(null);
+            Assert.AreEqual(2, ipcMessageCount);
+            Assert.IsTrue(viewModel.LowMemoryMode);
+            Assert.IsTrue(viewModel.LowMemoryTextExtractor);
+            Assert.IsTrue(viewModel.LowMemoryColorPicker);
+            Assert.IsTrue(viewModel.LowMemoryAdvancedPaste);
+            Assert.IsTrue(viewModel.LowMemoryPeek);
+
+            viewModel.LowMemoryPeek = false;
+            Assert.AreEqual(3, ipcMessageCount);
+            Assert.IsTrue(viewModel.LowMemoryMode);
+            Assert.IsTrue(viewModel.LowMemoryTextExtractor);
+            Assert.IsTrue(viewModel.LowMemoryColorPicker);
+            Assert.IsTrue(viewModel.LowMemoryAdvancedPaste);
+            Assert.IsFalse(viewModel.LowMemoryPeek);
+
+            viewModel.DisableAllLowMemoryModeCommand.Execute(null);
+            Assert.AreEqual(4, ipcMessageCount);
+            Assert.IsFalse(viewModel.LowMemoryMode);
+            Assert.IsFalse(viewModel.LowMemoryTextExtractor);
+            Assert.IsFalse(viewModel.LowMemoryColorPicker);
+            Assert.IsFalse(viewModel.LowMemoryAdvancedPaste);
+            Assert.IsFalse(viewModel.LowMemoryPeek);
+        }
+
+        [TestMethod]
         public void AllModulesAreEnabledByDefault()
         {
             // arrange

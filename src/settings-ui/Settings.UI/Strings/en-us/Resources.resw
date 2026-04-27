@@ -5887,6 +5887,72 @@ Text uses the current drawing color.</value>
   <data name="GeneralPage_QuickAccessShortcut.Header" xml:space="preserve">
     <value>Activation shortcut</value>
   </data>
+  <data name="GeneralPage_LowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="GeneralPage_LowMemoryMode.Description" xml:space="preserve">
+    <value>Shows which supported utilities close when not in use.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeAllSupported.Header" xml:space="preserve">
+    <value>All supported utilities</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeAllSupported.Description" xml:space="preserve">
+    <value>Apply low memory mode to every supported utility at once.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeEnableAll.Content" xml:space="preserve">
+    <value>Enable all</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeDisableAll.Content" xml:space="preserve">
+    <value>Disable all</value>
+  </data>
+  <data name="GeneralPage_FastLaunchTextExtractor.Header" xml:space="preserve">
+    <value>Low memory mode for Text Extractor</value>
+  </data>
+  <data name="GeneralPage_FastLaunchTextExtractor.Description" xml:space="preserve">
+    <value>Close Text Extractor when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="GeneralPage_FastLaunchColorPicker.Header" xml:space="preserve">
+    <value>Low memory mode for Color Picker</value>
+  </data>
+  <data name="GeneralPage_FastLaunchColorPicker.Description" xml:space="preserve">
+    <value>Close Color Picker when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="GeneralPage_FastLaunchAdvancedPaste.Header" xml:space="preserve">
+    <value>Low memory mode for Advanced Paste</value>
+  </data>
+  <data name="GeneralPage_FastLaunchAdvancedPaste.Description" xml:space="preserve">
+    <value>Close Advanced Paste when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="GeneralPage_FastLaunchPeek.Header" xml:space="preserve">
+    <value>Low memory mode for Peek</value>
+  </data>
+  <data name="GeneralPage_FastLaunchPeek.Description" xml:space="preserve">
+    <value>Close Peek when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="TextExtractor_FastLaunchInLowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="TextExtractor_FastLaunchInLowMemoryMode.Description" xml:space="preserve">
+    <value>Close Text Extractor when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="ColorPicker_FastLaunchInLowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="ColorPicker_FastLaunchInLowMemoryMode.Description" xml:space="preserve">
+    <value>Close Color Picker when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="AdvancedPaste_FastLaunchInLowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="AdvancedPaste_FastLaunchInLowMemoryMode.Description" xml:space="preserve">
+    <value>Close Advanced Paste when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="Peek_FastLaunchInLowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="Peek_FastLaunchInLowMemoryMode.Description" xml:space="preserve">
+    <value>Close Peek when not in use. Uses less memory but may open slower.</value>
+  </data>
   <data name="LightSwitch_ModeFollowNightLight.Content" xml:space="preserve">
     <value>Follow Night Light</value>
   </data>
