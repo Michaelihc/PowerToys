@@ -31,6 +31,8 @@ namespace PTSettingsHelper
 
     bool low_memory_mode_enabled();
     json::JsonObject create_default_fast_launch_settings();
+    void refresh_fast_launch_settings_cache();
+    void refresh_fast_launch_settings_cache(const json::JsonObject& general_settings);
     void ensure_fast_launch_settings_shape(json::JsonObject& obj);
     bool is_any_low_memory_module_enabled(const json::JsonObject& fast_launch_settings);
     bool is_low_memory_fast_launch_module(std::wstring_view module_key);

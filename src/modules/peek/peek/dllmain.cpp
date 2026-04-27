@@ -575,6 +575,7 @@ public:
         Logger::trace("Peek::enable()");
         ResetEvent(m_hInvokeEvent);
         ResetEvent(m_hTerminateEvent);
+        PTSettingsHelper::refresh_fast_launch_settings_cache();
         if (PTSettingsHelper::should_fast_launch(get_key()))
         {
             launch_process();

@@ -271,6 +271,7 @@ public:
         Logger::trace("TextExtractor::enable()");
         ResetEvent(m_hInvokeEvent);
         ResetEvent(m_hTerminateEvent);
+        PTSettingsHelper::refresh_fast_launch_settings_cache();
         const bool fast_launch = PTSettingsHelper::should_fast_launch(get_key());
         Logger::info("TextExtractor::enable(): fast_launch={}", fast_launch);
         Logger::flush();
@@ -314,8 +315,7 @@ public:
             if (!is_process_running())
             {
                 const bool fast_launch = PTSettingsHelper::should_fast_launch(get_key());
-                Logger::info("TextExtractor hotkey cold start. fast_launch={}", fast_launch);
-                Logger::flush();
+                Logger::trace("TextExtractor hotkey cold start. fast_launch={}", fast_launch);
                 launch_process(true, !fast_launch);
                 return true;
             }
@@ -327,8 +327,7 @@ public:
             }
             else
             {
-                Logger::info("TextExtractor invoke event signaled.");
-                Logger::flush();
+                Logger::trace("TextExtractor invoke event signaled.");
             }
 
             return true;

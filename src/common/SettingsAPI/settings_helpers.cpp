@@ -2,6 +2,7 @@
 #include "settings_helpers.h"
 
 #include <algorithm>
+#include <mutex>
 
 namespace PTSettingsHelper
 {
@@ -12,6 +13,50 @@ namespace PTSettingsHelper
     constexpr inline const wchar_t* last_version_json_field_name = L"last_version";
     constexpr inline const wchar_t* DataDiagnosticsRegKey = L"Software\\Classes\\PowerToys";
     constexpr inline const wchar_t* DataDiagnosticsRegValueName = L"AllowDataDiagnostics";
+
+    namespace
+    {
+        std::mutex fast_launch_settings_mutex;
+        json::JsonObject fast_launch_settings_cache;
+        bool fast_launch_settings_cache_initialized = false;
+
+        json::JsonObject get_fast_launch_settings_from_general_settings(const json::JsonObject& general_settings)
+        {
+            json::JsonObject fast_launch_settings;
+            if (json::has(general_settings, fast_launch_json_field_name, json::JsonValueType::Object))
+            {
+                fast_launch_settings = general_settings.GetNamedObject(fast_launch_json_field_name);
+            }
+            else
+            {
+                fast_launch_settings = create_default_fast_launch_settings();
+            }
+
+            ensure_fast_launch_settings_shape(fast_launch_settings);
+            return fast_launch_settings;
+        }
+
+        json::JsonObject get_cached_fast_launch_settings()
+        {
+            {
+                std::lock_guard lock{ fast_launch_settings_mutex };
+                if (fast_launch_settings_cache_initialized)
+                {
+                    return fast_launch_settings_cache;
+                }
+            }
+
+            refresh_fast_launch_settings_cache();
+
+            std::lock_guard lock{ fast_launch_settings_mutex };
+            if (!fast_launch_settings_cache_initialized)
+            {
+                return create_default_fast_launch_settings();
+            }
+
+            return fast_launch_settings_cache;
+        }
+    }
 
     std::wstring get_root_save_folder_location()
     {
@@ -108,6 +153,32 @@ namespace PTSettingsHelper
         return obj;
     }
 
+    void refresh_fast_launch_settings_cache()
+    {
+        try
+        {
+            refresh_fast_launch_settings_cache(load_general_settings());
+        }
+        catch (...)
+        {
+            std::lock_guard lock{ fast_launch_settings_mutex };
+            if (!fast_launch_settings_cache_initialized)
+            {
+                fast_launch_settings_cache = create_default_fast_launch_settings();
+                fast_launch_settings_cache_initialized = true;
+            }
+        }
+    }
+
+    void refresh_fast_launch_settings_cache(const json::JsonObject& general_settings)
+    {
+        auto fast_launch_settings = get_fast_launch_settings_from_general_settings(general_settings);
+
+        std::lock_guard lock{ fast_launch_settings_mutex };
+        fast_launch_settings_cache = fast_launch_settings;
+        fast_launch_settings_cache_initialized = true;
+    }
+
     void ensure_fast_launch_settings_shape(json::JsonObject& obj)
     {
         for (const auto module_key : low_memory_fast_launch_modules)
@@ -141,14 +212,7 @@ namespace PTSettingsHelper
     {
         try
         {
-            auto general_settings = load_general_settings();
-            if (!json::has(general_settings, fast_launch_json_field_name, json::JsonValueType::Object))
-            {
-                return false;
-            }
-
-            auto fast_launch = general_settings.GetNamedObject(fast_launch_json_field_name);
-            ensure_fast_launch_settings_shape(fast_launch);
+            auto fast_launch = get_cached_fast_launch_settings();
             return is_any_low_memory_module_enabled(fast_launch);
         }
         catch (...)
@@ -161,13 +225,7 @@ namespace PTSettingsHelper
     {
         try
         {
-            auto general_settings = load_general_settings();
-            if (!json::has(general_settings, fast_launch_json_field_name, json::JsonValueType::Object))
-            {
-                return default_value;
-            }
-
-            auto fast_launch = general_settings.GetNamedObject(fast_launch_json_field_name);
+            auto fast_launch = get_cached_fast_launch_settings();
             return fast_launch.GetNamedBoolean(std::wstring{ powertoy_key }, default_value);
         }
         catch (...)

@@ -178,6 +178,7 @@ json::JsonObject load_general_settings()
     }
 
     PTSettingsHelper::ensure_fast_launch_settings_shape(fast_launch);
+    PTSettingsHelper::refresh_fast_launch_settings_cache(loaded);
     low_memory_mode = PTSettingsHelper::is_any_low_memory_module_enabled(fast_launch);
     if (json::has(loaded, L"quick_access_shortcut", json::JsonValueType::Object))
     {
@@ -389,6 +390,7 @@ void apply_general_settings(const json::JsonObject& general_configs, bool save)
     }
 
     PTSettingsHelper::ensure_fast_launch_settings_shape(fast_launch);
+    PTSettingsHelper::refresh_fast_launch_settings_cache(general_configs);
     low_memory_mode = PTSettingsHelper::is_any_low_memory_module_enabled(fast_launch);
     const bool low_memory_policy_changed = old_fast_launch.Stringify() != fast_launch.Stringify();
 

@@ -975,6 +975,7 @@ public:
         Logger::trace("AdvancedPaste::enable()");
         Trace::AdvancedPaste_Enable(true);
         m_enabled = true;
+        PTSettingsHelper::refresh_fast_launch_settings_cache();
         if (PTSettingsHelper::should_fast_launch(get_key()))
         {
             m_process_manager.start(false);

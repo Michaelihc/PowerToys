@@ -260,6 +260,7 @@ public:
         ResetEvent(send_telemetry_event);
         ResetEvent(m_hInvokeEvent);
         ResetEvent(m_hAppTerminateEvent);
+        PTSettingsHelper::refresh_fast_launch_settings_cache();
         if (PTSettingsHelper::should_fast_launch(get_key()))
         {
             launch_process();
