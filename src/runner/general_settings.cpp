@@ -17,17 +17,9 @@
 #include <common/utils/resources.h>
 
 #include <algorithm>
-#include <array>
 
 namespace
 {
-    constexpr std::array low_memory_fast_launch_modules{
-        std::wstring_view{ L"TextExtractor" },
-        std::wstring_view{ L"ColorPicker" },
-        std::wstring_view{ L"AdvancedPaste" },
-        std::wstring_view{ L"Peek" },
-    };
-
     json::JsonValue create_empty_shortcut_array_value()
     {
         return json::JsonValue::Parse(L"[]");
@@ -46,46 +38,6 @@ namespace
         json::JsonObject obj;
         ensure_ignored_conflict_properties_shape(obj);
         return obj;
-    }
-
-    json::JsonObject create_default_fast_launch_settings()
-    {
-        json::JsonObject obj;
-        for (const auto module_key : low_memory_fast_launch_modules)
-        {
-            obj.SetNamedValue(module_key, json::value(true));
-        }
-
-        return obj;
-    }
-
-    void ensure_fast_launch_settings_shape(json::JsonObject& obj)
-    {
-        for (const auto module_key : low_memory_fast_launch_modules)
-        {
-            if (!json::has(obj, module_key, json::JsonValueType::Boolean))
-            {
-                obj.SetNamedValue(module_key, json::value(true));
-            }
-        }
-    }
-
-    bool is_any_low_memory_module_enabled(const json::JsonObject& fast_launch_settings)
-    {
-        for (const auto module_key : low_memory_fast_launch_modules)
-        {
-            if (!fast_launch_settings.GetNamedBoolean(module_key, true))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    bool is_low_memory_fast_launch_module(std::wstring_view module_key)
-    {
-        return std::find(low_memory_fast_launch_modules.begin(), low_memory_fast_launch_modules.end(), module_key) != low_memory_fast_launch_modules.end();
     }
 
     DashboardSortOrder parse_dashboard_sort_order(const json::JsonObject& obj, DashboardSortOrder fallback)
@@ -123,7 +75,7 @@ namespace
         auto& hkmng = HotkeyConflictDetector::HotkeyConflictManager::GetInstance();
         for (auto& [name, powertoy] : modules())
         {
-            if (!is_low_memory_fast_launch_module(name) || !powertoy->is_enabled() || !has_fast_launch_setting_changed(old_fast_launch_settings, new_fast_launch_settings, name))
+            if (!PTSettingsHelper::is_low_memory_fast_launch_module(name) || !powertoy->is_enabled() || !has_fast_launch_setting_changed(old_fast_launch_settings, new_fast_launch_settings, name))
             {
                 continue;
             }
@@ -149,7 +101,7 @@ static bool enable_experimentation = true;
 static bool enable_warnings_elevated_apps = true;
 static bool enable_quick_access = true;
 static bool low_memory_mode = false;
-static json::JsonObject fast_launch = create_default_fast_launch_settings();
+static json::JsonObject fast_launch = PTSettingsHelper::create_default_fast_launch_settings();
 static PowerToysSettings::HotkeyObject quick_access_shortcut;
 static DashboardSortOrder dashboard_sort_order = DashboardSortOrder::Alphabetical;
 static json::JsonObject ignored_conflict_properties = create_default_ignored_conflict_properties();
@@ -161,7 +113,7 @@ json::JsonObject GeneralSettings::to_json()
     auto ignoredProps = ignoredConflictProperties;
     ensure_ignored_conflict_properties_shape(ignoredProps);
     auto fastLaunchSettings = fastLaunch;
-    ensure_fast_launch_settings_shape(fastLaunchSettings);
+    PTSettingsHelper::ensure_fast_launch_settings_shape(fastLaunchSettings);
 
     result.SetNamedValue(L"startup", json::value(isStartupEnabled));
     if (!startupDisabledReason.empty())
@@ -222,11 +174,11 @@ json::JsonObject load_general_settings()
     }
     else
     {
-        fast_launch = create_default_fast_launch_settings();
+        fast_launch = PTSettingsHelper::create_default_fast_launch_settings();
     }
 
-    ensure_fast_launch_settings_shape(fast_launch);
-    low_memory_mode = is_any_low_memory_module_enabled(fast_launch);
+    PTSettingsHelper::ensure_fast_launch_settings_shape(fast_launch);
+    low_memory_mode = PTSettingsHelper::is_any_low_memory_module_enabled(fast_launch);
     if (json::has(loaded, L"quick_access_shortcut", json::JsonValueType::Object))
     {
         quick_access_shortcut = PowerToysSettings::HotkeyObject::from_json(loaded.GetNamedObject(L"quick_access_shortcut"));
@@ -259,7 +211,7 @@ GeneralSettings get_general_settings()
         .isAdmin = is_user_admin,
         .enableWarningsElevatedApps = enable_warnings_elevated_apps,
         .enableQuickAccess = enable_quick_access,
-        .lowMemoryMode = is_any_low_memory_module_enabled(fast_launch),
+        .lowMemoryMode = PTSettingsHelper::is_any_low_memory_module_enabled(fast_launch),
         .fastLaunch = fast_launch,
         .quickAccessShortcut = quick_access_shortcut,
         .showNewUpdatesToastNotification = show_new_updates_toast_notification,
@@ -390,7 +342,7 @@ void apply_general_settings(const json::JsonObject& general_configs, bool save)
     }
 
     auto old_fast_launch = fast_launch;
-    ensure_fast_launch_settings_shape(old_fast_launch);
+    PTSettingsHelper::ensure_fast_launch_settings_shape(old_fast_launch);
 
     Logger::info(L"apply_general_settings: {}", std::wstring{ general_configs.ToString() });
     run_as_elevated = general_configs.GetNamedBoolean(L"run_elevated", false);
@@ -433,11 +385,11 @@ void apply_general_settings(const json::JsonObject& general_configs, bool save)
     }
     else
     {
-        fast_launch = create_default_fast_launch_settings();
+        fast_launch = PTSettingsHelper::create_default_fast_launch_settings();
     }
 
-    ensure_fast_launch_settings_shape(fast_launch);
-    low_memory_mode = is_any_low_memory_module_enabled(fast_launch);
+    PTSettingsHelper::ensure_fast_launch_settings_shape(fast_launch);
+    low_memory_mode = PTSettingsHelper::is_any_low_memory_module_enabled(fast_launch);
     const bool low_memory_policy_changed = old_fast_launch.Stringify() != fast_launch.Stringify();
 
     show_new_updates_toast_notification = general_configs.GetNamedBoolean(L"show_new_updates_toast_notification", true);

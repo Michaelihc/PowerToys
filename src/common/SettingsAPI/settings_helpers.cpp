@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "settings_helpers.h"
 
+#include <algorithm>
+
 namespace PTSettingsHelper
 {
     constexpr inline const wchar_t* settings_filename = L"\\settings.json";
@@ -8,7 +10,6 @@ namespace PTSettingsHelper
     constexpr inline const wchar_t* last_version_run_filename = L"last_version_run.json";
     constexpr inline const wchar_t* opened_at_first_launch_json_field_name = L"openedAtFirstLaunch";
     constexpr inline const wchar_t* last_version_json_field_name = L"last_version";
-    constexpr inline const wchar_t* fast_launch_json_field_name = L"fast_launch";
     constexpr inline const wchar_t* DataDiagnosticsRegKey = L"Software\\Classes\\PowerToys";
     constexpr inline const wchar_t* DataDiagnosticsRegValueName = L"AllowDataDiagnostics";
 
@@ -100,6 +101,42 @@ namespace PTSettingsHelper
         return result.wstring();
     }
 
+    json::JsonObject create_default_fast_launch_settings()
+    {
+        json::JsonObject obj;
+        ensure_fast_launch_settings_shape(obj);
+        return obj;
+    }
+
+    void ensure_fast_launch_settings_shape(json::JsonObject& obj)
+    {
+        for (const auto module_key : low_memory_fast_launch_modules)
+        {
+            if (!json::has(obj, module_key, json::JsonValueType::Boolean))
+            {
+                obj.SetNamedValue(module_key, json::value(true));
+            }
+        }
+    }
+
+    bool is_any_low_memory_module_enabled(const json::JsonObject& fast_launch_settings)
+    {
+        for (const auto module_key : low_memory_fast_launch_modules)
+        {
+            if (!fast_launch_settings.GetNamedBoolean(module_key, true))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool is_low_memory_fast_launch_module(std::wstring_view module_key)
+    {
+        return std::find(low_memory_fast_launch_modules.begin(), low_memory_fast_launch_modules.end(), module_key) != low_memory_fast_launch_modules.end();
+    }
+
     bool low_memory_mode_enabled()
     {
         try
@@ -111,15 +148,8 @@ namespace PTSettingsHelper
             }
 
             auto fast_launch = general_settings.GetNamedObject(fast_launch_json_field_name);
-            for (const auto& module_key : { L"TextExtractor", L"ColorPicker", L"AdvancedPaste", L"Peek" })
-            {
-                if (!fast_launch.GetNamedBoolean(module_key, true))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            ensure_fast_launch_settings_shape(fast_launch);
+            return is_any_low_memory_module_enabled(fast_launch);
         }
         catch (...)
         {

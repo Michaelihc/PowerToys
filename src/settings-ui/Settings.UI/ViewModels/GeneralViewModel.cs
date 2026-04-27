@@ -63,6 +63,19 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             return changed;
         }
 
+        private bool SetLowMemoryModeFromModule(ModuleType moduleType, bool value)
+        {
+            if (!SetLowMemoryMode(moduleType, value))
+            {
+                return false;
+            }
+
+            RefreshLowMemoryModeSummary();
+            NotifyLowMemoryModeSummaryChanged();
+            NotifyPropertyChanged(nameof(LowMemoryMode));
+            return true;
+        }
+
         private void RefreshLowMemoryModeSummary()
         {
             _lowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(GeneralSettingsConfig);
@@ -74,32 +87,22 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             OnPropertyChanged(nameof(LowMemoryMode));
         }
 
-        private void UpdateLowMemoryModeProperty(ModuleType moduleType, ref bool backingField, string propertyName)
-        {
-            bool newValue = GetLowMemoryMode(moduleType);
-            if (backingField != newValue)
-            {
-                backingField = newValue;
-                OnPropertyChanged(propertyName);
-            }
-        }
-
         private void RefreshLowMemoryModeProperties()
         {
             RefreshLowMemoryModeSummary();
-            _lowMemoryTextExtractor = GetLowMemoryMode(ModuleType.PowerOCR);
-            _lowMemoryColorPicker = GetLowMemoryMode(ModuleType.ColorPicker);
-            _lowMemoryAdvancedPaste = GetLowMemoryMode(ModuleType.AdvancedPaste);
-            _lowMemoryPeek = GetLowMemoryMode(ModuleType.Peek);
+            foreach (var module in LowMemoryModules)
+            {
+                module.Refresh();
+            }
         }
 
         private void NotifyLowMemoryModePropertiesChanged()
         {
             NotifyLowMemoryModeSummaryChanged();
-            OnPropertyChanged(nameof(LowMemoryTextExtractor));
-            OnPropertyChanged(nameof(LowMemoryColorPicker));
-            OnPropertyChanged(nameof(LowMemoryAdvancedPaste));
-            OnPropertyChanged(nameof(LowMemoryPeek));
+            foreach (var module in LowMemoryModules)
+            {
+                module.Refresh();
+            }
         }
 
         private UpdatingSettings UpdatingSettingsConfig { get; set; }
@@ -127,6 +130,8 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         public ButtonClickCommand EnableAllLowMemoryModeCommand { get; set; }
 
         public ButtonClickCommand DisableAllLowMemoryModeCommand { get; set; }
+
+        public ObservableCollection<LowMemoryModuleViewModel> LowMemoryModules { get; } = new ObservableCollection<LowMemoryModuleViewModel>();
 
         public Func<string, int> SendConfigMSG { get; }
 
@@ -231,6 +236,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             _runElevated = GeneralSettingsConfig.RunElevated;
             _enableWarningsElevatedApps = GeneralSettingsConfig.EnableWarningsElevatedApps;
             _enableQuickAccess = GeneralSettingsConfig.EnableQuickAccess;
+            BuildLowMemoryModules();
             RefreshLowMemoryModeProperties();
             _quickAccessShortcut = GeneralSettingsConfig.QuickAccessShortcut;
             if (_quickAccessShortcut != null)
@@ -281,6 +287,17 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             InitializeLanguages();
         }
 
+        private void BuildLowMemoryModules()
+        {
+            LowMemoryModules.Clear();
+            foreach (var descriptor in ModuleHelper.LowMemoryModuleDescriptors)
+            {
+                GeneralSettingsConfig.FastLaunch ??= new FastLaunchSettings();
+                GeneralSettingsConfig.FastLaunch.EnsureValue(descriptor.ModuleKey);
+                LowMemoryModules.Add(new LowMemoryModuleViewModel(descriptor, GetResourceString, GetLowMemoryMode, SetLowMemoryModeFromModule));
+            }
+        }
+
         // Supported languages. Taken from Resources.wxs + default + en-US
         private Dictionary<string, string> langTagsAndIds = new Dictionary<string, string>
         {
@@ -321,10 +338,6 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         private bool _enableWarningsElevatedApps;
         private bool _enableQuickAccess;
         private bool _lowMemoryMode;
-        private bool _lowMemoryTextExtractor;
-        private bool _lowMemoryColorPicker;
-        private bool _lowMemoryAdvancedPaste;
-        private bool _lowMemoryPeek;
         private HotkeySettings _quickAccessShortcut;
         private int _themeIndex;
 
@@ -626,82 +639,6 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 RefreshLowMemoryModeProperties();
                 NotifyLowMemoryModePropertiesChanged();
                 NotifyPropertyChanged(nameof(LowMemoryMode));
-            }
-        }
-
-        public bool LowMemoryTextExtractor
-        {
-            get
-            {
-                return _lowMemoryTextExtractor;
-            }
-
-            set
-            {
-                if (SetLowMemoryMode(ModuleType.PowerOCR, value))
-                {
-                    _lowMemoryTextExtractor = value;
-                    RefreshLowMemoryModeSummary();
-                    NotifyLowMemoryModeSummaryChanged();
-                    NotifyPropertyChanged();
-                }
-            }
-        }
-
-        public bool LowMemoryColorPicker
-        {
-            get
-            {
-                return _lowMemoryColorPicker;
-            }
-
-            set
-            {
-                if (SetLowMemoryMode(ModuleType.ColorPicker, value))
-                {
-                    _lowMemoryColorPicker = value;
-                    RefreshLowMemoryModeSummary();
-                    NotifyLowMemoryModeSummaryChanged();
-                    NotifyPropertyChanged();
-                }
-            }
-        }
-
-        public bool LowMemoryAdvancedPaste
-        {
-            get
-            {
-                return _lowMemoryAdvancedPaste;
-            }
-
-            set
-            {
-                if (SetLowMemoryMode(ModuleType.AdvancedPaste, value))
-                {
-                    _lowMemoryAdvancedPaste = value;
-                    RefreshLowMemoryModeSummary();
-                    NotifyLowMemoryModeSummaryChanged();
-                    NotifyPropertyChanged();
-                }
-            }
-        }
-
-        public bool LowMemoryPeek
-        {
-            get
-            {
-                return _lowMemoryPeek;
-            }
-
-            set
-            {
-                if (SetLowMemoryMode(ModuleType.Peek, value))
-                {
-                    _lowMemoryPeek = value;
-                    RefreshLowMemoryModeSummary();
-                    NotifyLowMemoryModeSummaryChanged();
-                    NotifyPropertyChanged();
-                }
             }
         }
 
@@ -1715,10 +1652,11 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
 
                 newSettings.LowMemoryMode = newLowMemoryMode;
 
-                UpdateLowMemoryModeProperty(ModuleType.PowerOCR, ref _lowMemoryTextExtractor, nameof(LowMemoryTextExtractor));
-                UpdateLowMemoryModeProperty(ModuleType.ColorPicker, ref _lowMemoryColorPicker, nameof(LowMemoryColorPicker));
-                UpdateLowMemoryModeProperty(ModuleType.AdvancedPaste, ref _lowMemoryAdvancedPaste, nameof(LowMemoryAdvancedPaste));
-                UpdateLowMemoryModeProperty(ModuleType.Peek, ref _lowMemoryPeek, nameof(LowMemoryPeek));
+                foreach (var module in LowMemoryModules)
+                {
+                    newSettings.FastLaunch.EnsureValue(module.Descriptor.ModuleKey);
+                    module.Refresh();
+                }
             });
         }
 
