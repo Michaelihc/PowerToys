@@ -51,6 +51,79 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
 
         private GeneralSettings GeneralSettingsConfig { get; set; }
 
+        private bool GetLowMemoryMode(ModuleType moduleType)
+        {
+            return ModuleHelper.GetLowMemoryMode(GeneralSettingsConfig, moduleType);
+        }
+
+        private bool SetLowMemoryMode(ModuleType moduleType, bool value)
+        {
+            bool changed = ModuleHelper.SetLowMemoryMode(GeneralSettingsConfig, moduleType, value);
+            GeneralSettingsConfig.LowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(GeneralSettingsConfig);
+            return changed;
+        }
+
+        private bool SetLowMemoryModeFromModule(ModuleType moduleType, bool value)
+        {
+            if (!SetLowMemoryMode(moduleType, value))
+            {
+                return false;
+            }
+
+            RefreshLowMemoryModeSummary();
+            NotifyLowMemoryModeSummaryChanged();
+            NotifyPropertyChanged(nameof(LowMemoryMode));
+            return true;
+        }
+
+        private void RefreshLowMemoryModeSummary()
+        {
+            _lowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(GeneralSettingsConfig);
+            GeneralSettingsConfig.LowMemoryMode = _lowMemoryMode;
+        }
+
+        private void NotifyLowMemoryModeSummaryChanged()
+        {
+            OnPropertyChanged(nameof(LowMemoryMode));
+        }
+
+        private void RefreshLowMemoryModeProperties()
+        {
+            RefreshLowMemoryModeSummary();
+            foreach (var module in LowMemoryModules)
+            {
+                module.Refresh();
+            }
+        }
+
+        private void NotifyLowMemoryModePropertiesChanged()
+        {
+            NotifyLowMemoryModeSummaryChanged();
+            NotifyLowMemoryModeModulePropertiesChanged();
+            foreach (var module in LowMemoryModules)
+            {
+                module.Refresh();
+            }
+        }
+
+        private void NotifyLowMemoryModeModulePropertiesChanged()
+        {
+            OnPropertyChanged(nameof(LowMemoryTextExtractor));
+            OnPropertyChanged(nameof(LowMemoryColorPicker));
+            OnPropertyChanged(nameof(LowMemoryAdvancedPaste));
+            OnPropertyChanged(nameof(LowMemoryPeek));
+        }
+
+        private string FormatUpdateCheckedDate(DateTime? dateTime)
+        {
+            if (ResourceLoader != null)
+            {
+                return FriendlyDateHelper.Format(dateTime, ResourceLoader);
+            }
+
+            return dateTime?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+        }
+
         private UpdatingSettings UpdatingSettingsConfig { get; set; }
 
         public ButtonClickCommand CheckForUpdatesEventHandler { get; set; }
@@ -72,6 +145,12 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         public ButtonClickCommand RestartElevatedButtonEventHandler { get; set; }
 
         public ButtonClickCommand UpdateNowButtonEventHandler { get; set; }
+
+        public ButtonClickCommand EnableAllLowMemoryModeCommand { get; set; }
+
+        public ButtonClickCommand DisableAllLowMemoryModeCommand { get; set; }
+
+        public ObservableCollection<LowMemoryModuleViewModel> LowMemoryModules { get; } = new ObservableCollection<LowMemoryModuleViewModel>();
 
         public Func<string, int> SendConfigMSG { get; }
 
@@ -105,6 +184,8 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             SelectSettingBackupDirEventHandler = new ButtonClickCommand(SelectSettingBackupDir);
             RestoreConfigsEventHandler = new ButtonClickCommand(RestoreConfigsClick);
             RefreshBackupStatusEventHandler = new ButtonClickCommand(RefreshBackupStatusEventHandlerClick);
+            EnableAllLowMemoryModeCommand = new ButtonClickCommand(() => SetLowMemoryModeForAll(true));
+            DisableAllLowMemoryModeCommand = new ButtonClickCommand(() => SetLowMemoryModeForAll(false));
             HideBackupAndRestoreMessageAreaAction = hideBackupAndRestoreMessageAreaAction;
             DoBackupAndRestoreDryRun = doBackupAndRestoreDryRun;
             PickSingleFolderDialog = pickSingleFolderDialog;
@@ -174,6 +255,8 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             _runElevated = GeneralSettingsConfig.RunElevated;
             _enableWarningsElevatedApps = GeneralSettingsConfig.EnableWarningsElevatedApps;
             _enableQuickAccess = GeneralSettingsConfig.EnableQuickAccess;
+            BuildLowMemoryModules();
+            RefreshLowMemoryModeProperties();
             _quickAccessShortcut = GeneralSettingsConfig.QuickAccessShortcut;
             if (_quickAccessShortcut != null)
             {
@@ -188,7 +271,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             _updatingState = UpdatingSettingsConfig.State;
             _newAvailableVersion = UpdatingSettingsConfig.NewVersion;
             _newAvailableVersionLink = UpdatingSettingsConfig.ReleasePageLink;
-            _updateCheckedDate = FriendlyDateHelper.Format(UpdatingSettingsConfig.LastCheckedDateTime);
+            _updateCheckedDate = FormatUpdateCheckedDate(UpdatingSettingsConfig.LastCheckedDateTime);
 
             _newUpdatesToastIsGpoDisabled = GPOWrapper.GetDisableNewUpdateToastValue() == GpoRuleConfigured.Enabled;
             _autoDownloadUpdatesIsGpoDisabled = GPOWrapper.GetDisableAutomaticUpdateDownloadValue() == GpoRuleConfigured.Enabled;
@@ -221,6 +304,17 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             DeleteDiagnosticDataOlderThan28Days(localLowEtwDirPath);
 
             InitializeLanguages();
+        }
+
+        private void BuildLowMemoryModules()
+        {
+            LowMemoryModules.Clear();
+            foreach (var descriptor in ModuleHelper.LowMemoryModuleDescriptors)
+            {
+                GeneralSettingsConfig.LowMemoryModules ??= new LowMemoryModuleSettings();
+                GeneralSettingsConfig.LowMemoryModules.EnsureValue(descriptor.ModuleKey);
+                LowMemoryModules.Add(new LowMemoryModuleViewModel(descriptor, GetResourceString, GetLowMemoryMode, SetLowMemoryModeFromModule));
+            }
         }
 
         // Supported languages. Taken from Resources.wxs + default + en-US
@@ -262,6 +356,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         private bool _isAdmin;
         private bool _enableWarningsElevatedApps;
         private bool _enableQuickAccess;
+        private bool _lowMemoryMode;
         private HotkeySettings _quickAccessShortcut;
         private int _themeIndex;
 
@@ -539,6 +634,93 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                     _enableQuickAccess = value;
                     GeneralSettingsConfig.EnableQuickAccess = value;
                     NotifyPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryMode
+        {
+            get
+            {
+                return _lowMemoryMode;
+            }
+
+            set
+            {
+                SetLowMemoryModeForAll(value);
+            }
+        }
+
+        public void SetLowMemoryModeForAll(bool value)
+        {
+            if (ModuleHelper.SetLowMemoryModeForAll(GeneralSettingsConfig, value))
+            {
+                RefreshLowMemoryModeProperties();
+                NotifyLowMemoryModePropertiesChanged();
+                NotifyPropertyChanged(nameof(LowMemoryMode));
+            }
+        }
+
+        public bool LowMemoryTextExtractor
+        {
+            get
+            {
+                return GetLowMemoryMode(ModuleType.PowerOCR);
+            }
+
+            set
+            {
+                if (SetLowMemoryModeFromModule(ModuleType.PowerOCR, value))
+                {
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryColorPicker
+        {
+            get
+            {
+                return GetLowMemoryMode(ModuleType.ColorPicker);
+            }
+
+            set
+            {
+                if (SetLowMemoryModeFromModule(ModuleType.ColorPicker, value))
+                {
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryAdvancedPaste
+        {
+            get
+            {
+                return GetLowMemoryMode(ModuleType.AdvancedPaste);
+            }
+
+            set
+            {
+                if (SetLowMemoryModeFromModule(ModuleType.AdvancedPaste, value))
+                {
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool LowMemoryPeek
+        {
+            get
+            {
+                return GetLowMemoryMode(ModuleType.Peek);
+            }
+
+            set
+            {
+                if (SetLowMemoryModeFromModule(ModuleType.Peek, value))
+                {
+                    OnPropertyChanged();
                 }
             }
         }
@@ -1383,7 +1565,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 }
                 else
                 {
-                    bool dateChanged = UpdateCheckedDate == FriendlyDateHelper.Format(UpdatingSettingsConfig.LastCheckedDateTime);
+                    bool dateChanged = UpdateCheckedDate == FormatUpdateCheckedDate(UpdatingSettingsConfig.LastCheckedDateTime);
                     bool fileDownloaded = string.IsNullOrEmpty(UpdatingSettingsConfig.DownloadedInstallerFilename);
                     IsNewVersionDownloading = !(dateChanged || fileDownloaded);
                 }
@@ -1391,7 +1573,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 PowerToysUpdatingState = UpdatingSettingsConfig.State;
                 PowerToysNewAvailableVersion = UpdatingSettingsConfig.NewVersion;
                 PowerToysNewAvailableVersionLink = UpdatingSettingsConfig.ReleasePageLink;
-                UpdateCheckedDate = FriendlyDateHelper.Format(UpdatingSettingsConfig.LastCheckedDateTime);
+                UpdateCheckedDate = FormatUpdateCheckedDate(UpdatingSettingsConfig.LastCheckedDateTime);
 
                 _isNoNetwork = PowerToysUpdatingState == UpdatingSettings.UpdatingState.NetworkError;
                 NotifyPropertyChanged(nameof(IsNoNetwork));
@@ -1535,6 +1717,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         {
             _dispatcherQueue?.TryEnqueue(() =>
             {
+                newSettings.LowMemoryModules ??= new LowMemoryModuleSettings();
                 GeneralSettingsConfig = newSettings;
 
                 if (_enableQuickAccess != newSettings.EnableQuickAccess)
@@ -1542,6 +1725,23 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                     _enableQuickAccess = newSettings.EnableQuickAccess;
                     OnPropertyChanged(nameof(EnableQuickAccess));
                 }
+
+                bool newLowMemoryMode = ModuleHelper.AnyLowMemoryModeEnabled(newSettings);
+                if (_lowMemoryMode != newLowMemoryMode)
+                {
+                    _lowMemoryMode = newLowMemoryMode;
+                    OnPropertyChanged(nameof(LowMemoryMode));
+                }
+
+                newSettings.LowMemoryMode = newLowMemoryMode;
+
+                foreach (var module in LowMemoryModules)
+                {
+                    newSettings.LowMemoryModules.EnsureValue(module.Descriptor.ModuleKey);
+                    module.Refresh();
+                }
+
+                NotifyLowMemoryModeModulePropertiesChanged();
             });
         }
 

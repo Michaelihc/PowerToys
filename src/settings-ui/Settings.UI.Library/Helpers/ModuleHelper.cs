@@ -2,6 +2,9 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Generic;
+using System.Linq;
+
 using ManagedCommon;
 
 namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
@@ -120,6 +123,68 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
                 case ModuleType.ZoomIt: generalSettingsConfig.Enabled.ZoomIt = isEnabled; break;
                 case ModuleType.GeneralSettings: generalSettingsConfig.EnableQuickAccess = isEnabled; break;
             }
+        }
+
+        public static IReadOnlyList<LowMemoryModuleDescriptor> LowMemoryModuleDescriptors { get; } = new[]
+        {
+            new LowMemoryModuleDescriptor(ModuleType.PowerOCR, PowerOcrSettings.ModuleName, "GeneralPage_LowMemoryTextExtractorDetails"),
+            new LowMemoryModuleDescriptor(ModuleType.ColorPicker, ColorPickerSettings.ModuleName, "GeneralPage_LowMemoryColorPickerDetails"),
+            new LowMemoryModuleDescriptor(ModuleType.AdvancedPaste, AdvancedPasteSettings.ModuleName, "GeneralPage_LowMemoryAdvancedPasteDetails"),
+            new LowMemoryModuleDescriptor(ModuleType.Peek, PeekSettings.ModuleName, "GeneralPage_LowMemoryPeekDetails"),
+        };
+
+        public static IReadOnlyList<ModuleType> LowMemoryOverrideModules { get; } = LowMemoryModuleDescriptors.Select(descriptor => descriptor.ModuleType).ToList();
+
+        public static bool SupportsLowMemoryOverride(ModuleType moduleType)
+        {
+            return LowMemoryModuleDescriptors.Any(descriptor => descriptor.ModuleType == moduleType);
+        }
+
+        public static LowMemoryModuleDescriptor GetLowMemoryModuleDescriptor(ModuleType moduleType)
+        {
+            return LowMemoryModuleDescriptors.FirstOrDefault(descriptor => descriptor.ModuleType == moduleType);
+        }
+
+        public static bool GetLowMemoryMode(GeneralSettings generalSettingsConfig, ModuleType moduleType)
+        {
+            generalSettingsConfig.LowMemoryModules ??= new LowMemoryModuleSettings();
+
+            var descriptor = GetLowMemoryModuleDescriptor(moduleType);
+            return descriptor != null && generalSettingsConfig.LowMemoryModules.GetValue(descriptor.ModuleKey);
+        }
+
+        public static bool SetLowMemoryMode(GeneralSettings generalSettingsConfig, ModuleType moduleType, bool lowMemoryMode)
+        {
+            generalSettingsConfig.LowMemoryModules ??= new LowMemoryModuleSettings();
+
+            var descriptor = GetLowMemoryModuleDescriptor(moduleType);
+            return descriptor != null && generalSettingsConfig.LowMemoryModules.SetValue(descriptor.ModuleKey, lowMemoryMode);
+        }
+
+        public static bool AnyLowMemoryModeEnabled(GeneralSettings generalSettingsConfig)
+        {
+            foreach (var descriptor in LowMemoryModuleDescriptors)
+            {
+                if (GetLowMemoryMode(generalSettingsConfig, descriptor.ModuleType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool SetLowMemoryModeForAll(GeneralSettings generalSettingsConfig, bool lowMemoryMode)
+        {
+            bool changed = false;
+            foreach (var descriptor in LowMemoryModuleDescriptors)
+            {
+                changed |= SetLowMemoryMode(generalSettingsConfig, descriptor.ModuleType, lowMemoryMode);
+            }
+
+            bool oldLowMemoryMode = generalSettingsConfig.LowMemoryMode;
+            generalSettingsConfig.LowMemoryMode = AnyLowMemoryModeEnabled(generalSettingsConfig);
+            return changed || oldLowMemoryMode != generalSettingsConfig.LowMemoryMode;
         }
 
         /// <summary>

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Common.UI;
+using ManagedCommon;
 using PowerOCR.Utilities;
 using PowerToys.Interop;
 
@@ -16,14 +17,20 @@ namespace PowerOCR.Keyboard
     {
         public EventMonitor(System.Windows.Threading.Dispatcher dispatcher, System.Threading.CancellationToken exitToken)
         {
+            Logger.LogInfo("TextExtractor event monitor starting.");
             NativeEventWaiter.WaitForEventLoop(Constants.ShowPowerOCRSharedEvent(), StartOCRSession, dispatcher, exitToken);
         }
 
         public void StartOCRSession()
         {
+            Logger.LogInfo("TextExtractor activation requested.");
             if (!WindowUtilities.IsOCROverlayCreated())
             {
                 WindowUtilities.LaunchOCROverlayOnEveryScreen();
+            }
+            else
+            {
+                Logger.LogInfo("TextExtractor overlay is already open. Ignoring activation request.");
             }
         }
     }

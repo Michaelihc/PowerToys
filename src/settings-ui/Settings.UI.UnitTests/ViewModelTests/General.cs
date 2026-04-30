@@ -1,8 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation
+// Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 
 using Microsoft.PowerToys.Settings.UI.Library;
 using Microsoft.PowerToys.Settings.UI.UnitTests.BackwardsCompatibility;
@@ -337,6 +338,113 @@ namespace ViewModelTests
             // Act
             viewModel.ShowSysTrayIcon = false;
             Assert.IsTrue(sawExpectedIpcPayload);
+        }
+
+        [TestMethod]
+        public void LowMemoryModeShouldBeDisabledByDefault()
+        {
+            GeneralSettings settings = new GeneralSettings();
+
+            Assert.IsFalse(settings.LowMemoryMode);
+            Assert.IsNotNull(settings.LowMemoryModules);
+            Assert.IsFalse(settings.LowMemoryModules.TextExtractor);
+            Assert.IsFalse(settings.LowMemoryModules.ColorPicker);
+            Assert.IsFalse(settings.LowMemoryModules.AdvancedPaste);
+            Assert.IsFalse(settings.LowMemoryModules.Peek);
+        }
+
+        [TestMethod]
+        public void LowMemorySettingsShouldRoundTripInOutgoingGeneralSettings()
+        {
+            GeneralSettings settings = new GeneralSettings
+            {
+                LowMemoryMode = true,
+            };
+            settings.LowMemoryModules.TextExtractor = true;
+
+            string outgoingSettings = new OutGoingGeneralSettings(settings).ToString();
+            OutGoingGeneralSettings deserializedSettings = JsonSerializer.Deserialize<OutGoingGeneralSettings>(outgoingSettings);
+
+            Assert.IsNotNull(deserializedSettings.GeneralSettings);
+            Assert.IsTrue(deserializedSettings.GeneralSettings.LowMemoryMode);
+            Assert.IsNotNull(deserializedSettings.GeneralSettings.LowMemoryModules);
+            Assert.IsTrue(deserializedSettings.GeneralSettings.LowMemoryModules.TextExtractor);
+        }
+
+        [TestMethod]
+        public void LowMemoryModuleSettingsShouldRoundTripAdditionalModuleKeys()
+        {
+            GeneralSettings settings = new GeneralSettings();
+            settings.LowMemoryModules.SetValue("FutureUtility", true);
+
+            string outgoingSettings = new OutGoingGeneralSettings(settings).ToString();
+            OutGoingGeneralSettings deserializedSettings = JsonSerializer.Deserialize<OutGoingGeneralSettings>(outgoingSettings);
+
+            Assert.IsNotNull(deserializedSettings.GeneralSettings);
+            Assert.IsNotNull(deserializedSettings.GeneralSettings.LowMemoryModules);
+            Assert.IsTrue(deserializedSettings.GeneralSettings.LowMemoryModules.GetValue("FutureUtility"));
+        }
+
+        [TestMethod]
+        public void LowMemoryBulkCommandsShouldNotRunWhenIndividualOverrideChanges()
+        {
+            int ipcMessageCount = 0;
+            Func<string, int> sendMockIPCConfigMSG = msg =>
+            {
+                ipcMessageCount++;
+                return 0;
+            };
+            Func<string, int> sendRestartAdminIPCMessage = msg => 0;
+            Func<string, int> sendCheckForUpdatesIPCMessage = msg => 0;
+            GeneralViewModel viewModel = new TestGeneralViewModel(
+                settingsRepository: SettingsRepository<GeneralSettings>.GetInstance(mockGeneralSettingsUtils.Object),
+                "GeneralSettings_RunningAsAdminText",
+                "GeneralSettings_RunningAsUserText",
+                false,
+                false,
+                sendMockIPCConfigMSG,
+                sendRestartAdminIPCMessage,
+                sendCheckForUpdatesIPCMessage,
+                GeneralSettingsFileName);
+
+            Assert.IsFalse(viewModel.LowMemoryMode);
+
+            LowMemoryModuleViewModel textExtractor = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == PowerOcrSettings.ModuleName);
+            LowMemoryModuleViewModel colorPicker = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == ColorPickerSettings.ModuleName);
+            LowMemoryModuleViewModel advancedPaste = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == AdvancedPasteSettings.ModuleName);
+            LowMemoryModuleViewModel peek = viewModel.LowMemoryModules.Single(module => module.Descriptor.ModuleKey == PeekSettings.ModuleName);
+
+            textExtractor.IsEnabled = true;
+            Assert.AreEqual(1, ipcMessageCount);
+            Assert.IsTrue(viewModel.LowMemoryMode);
+            Assert.IsTrue(textExtractor.IsEnabled);
+            Assert.IsFalse(colorPicker.IsEnabled);
+            Assert.IsFalse(advancedPaste.IsEnabled);
+            Assert.IsFalse(peek.IsEnabled);
+
+            viewModel.EnableAllLowMemoryModeCommand.Execute(null);
+            Assert.AreEqual(2, ipcMessageCount);
+            Assert.IsTrue(viewModel.LowMemoryMode);
+            Assert.IsTrue(textExtractor.IsEnabled);
+            Assert.IsTrue(colorPicker.IsEnabled);
+            Assert.IsTrue(advancedPaste.IsEnabled);
+            Assert.IsTrue(peek.IsEnabled);
+
+            peek.IsEnabled = false;
+            Assert.AreEqual(3, ipcMessageCount);
+            Assert.IsTrue(viewModel.LowMemoryMode);
+            Assert.IsTrue(textExtractor.IsEnabled);
+            Assert.IsTrue(colorPicker.IsEnabled);
+            Assert.IsTrue(advancedPaste.IsEnabled);
+            Assert.IsFalse(peek.IsEnabled);
+
+            viewModel.DisableAllLowMemoryModeCommand.Execute(null);
+            Assert.AreEqual(4, ipcMessageCount);
+            Assert.IsFalse(viewModel.LowMemoryMode);
+            Assert.IsFalse(textExtractor.IsEnabled);
+            Assert.IsFalse(colorPicker.IsEnabled);
+            Assert.IsFalse(advancedPaste.IsEnabled);
+            Assert.IsFalse(peek.IsEnabled);
         }
 
         [TestMethod]
