@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -5920,6 +5920,84 @@ Text uses the current drawing color.</value>
   </data>
   <data name="GeneralPage_QuickAccessShortcut.Header" xml:space="preserve">
     <value>Activation shortcut</value>
+  </data>
+  <data name="GeneralPage_LowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="GeneralPage_LowMemoryMode.Description" xml:space="preserve">
+    <value>Supported utilities close when not in use to use less memory, but may open slower.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeAllSupported.Header" xml:space="preserve">
+    <value>All supported utilities</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeAllSupported.Description" xml:space="preserve">
+    <value>Apply low memory mode to every supported utility at once.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeEnableAll.Content" xml:space="preserve">
+    <value>Enable all</value>
+  </data>
+  <data name="GeneralPage_LowMemoryModeDisableAll.Content" xml:space="preserve">
+    <value>Disable all</value>
+  </data>
+  <data name="GeneralPage_LowMemoryTextExtractor.Header" xml:space="preserve">
+    <value>Text Extractor</value>
+  </data>
+  <data name="GeneralPage_LowMemoryColorPicker.Header" xml:space="preserve">
+    <value>Color Picker</value>
+  </data>
+  <data name="GeneralPage_LowMemoryAdvancedPaste.Header" xml:space="preserve">
+    <value>Advanced Paste</value>
+  </data>
+  <data name="GeneralPage_LowMemoryPeek.Header" xml:space="preserve">
+    <value>Peek</value>
+  </data>
+  <data name="GeneralPage_LowMemoryTextExtractorDetails.Header" xml:space="preserve">
+    <value>Low memory mode for Text Extractor</value>
+  </data>
+  <data name="GeneralPage_LowMemoryTextExtractorDetails.Description" xml:space="preserve">
+    <value>Close Text Extractor when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryColorPickerDetails.Header" xml:space="preserve">
+    <value>Low memory mode for Color Picker</value>
+  </data>
+  <data name="GeneralPage_LowMemoryColorPickerDetails.Description" xml:space="preserve">
+    <value>Close Color Picker when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryAdvancedPasteDetails.Header" xml:space="preserve">
+    <value>Low memory mode for Advanced Paste</value>
+  </data>
+  <data name="GeneralPage_LowMemoryAdvancedPasteDetails.Description" xml:space="preserve">
+    <value>Close Advanced Paste when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="GeneralPage_LowMemoryPeekDetails.Header" xml:space="preserve">
+    <value>Low memory mode for Peek</value>
+  </data>
+  <data name="GeneralPage_LowMemoryPeekDetails.Description" xml:space="preserve">
+    <value>Close Peek when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="TextExtractor_LowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="TextExtractor_LowMemoryMode.Description" xml:space="preserve">
+    <value>Close Text Extractor when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="ColorPicker_LowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="ColorPicker_LowMemoryMode.Description" xml:space="preserve">
+    <value>Close Color Picker when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="AdvancedPaste_LowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="AdvancedPaste_LowMemoryMode.Description" xml:space="preserve">
+    <value>Close Advanced Paste when not in use. Uses less memory but may open slower.</value>
+  </data>
+  <data name="Peek_LowMemoryMode.Header" xml:space="preserve">
+    <value>Low memory mode</value>
+  </data>
+  <data name="Peek_LowMemoryMode.Description" xml:space="preserve">
+    <value>Close Peek when not in use. Uses less memory but may open slower.</value>
   </data>
   <data name="LightSwitch_ModeFollowNightLight.Content" xml:space="preserve">
     <value>Follow Night Light</value>
